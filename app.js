@@ -126,7 +126,8 @@ async function inspectLink() {
       setMessage("Մինչ կապակցումը առաջադրանքները պահվում են այս սարքում։");
     }
     render();
-  } catch (error) { setMessage(error.message, "error"); }
+    return state.linked;
+  } catch (error) { setMessage(error.message, "error"); return null; }
 }
 
 async function loadHashSession() {
@@ -220,7 +221,9 @@ async function setupTelegramWebhook() {
   try {
     await api("/setup-webhook", { method: "POST", body: {}, headers: { "x-setup-secret": secret } });
     $("#webhook-secret").value = "";
-    setMessage("Telegram բոտը միացված է։ Կարող ես կապել PWA հաշիվը։", "success");
+    const linked = await inspectLink();
+    if (linked === true) setMessage("Telegram բոտն ու PWA հաշիվը կապակցված են։ Առաջադրանքները համաժամացվում են։", "success");
+    else if (linked === false) setMessage("Telegram բոտը միացված է։ PWA հաշիվը դեռ կապակցված չէ։ Ստեղծիր կապակցման կոդ և Telegram-ում ուղարկիր ամբողջ /link հրամանը։", "success");
   } catch (error) { setMessage(error.message, "error"); }
   finally { button.disabled = false; }
 }
@@ -359,3 +362,4 @@ async function initialize() {
 }
 
 initialize();
+
