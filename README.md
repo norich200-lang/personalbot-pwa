@@ -16,3 +16,7 @@ Serve this directory over HTTP (for example, python -m http.server 8000) and ope
 
 ## Deploy
 Enable GitHub Pages for the main branch, root folder. HTTPS is required for service workers and PWA installation.
+
+
+## Deployment
+Hosted with GitHub Pages using the GitHub Actions workflow.
