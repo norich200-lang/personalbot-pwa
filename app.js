@@ -77,13 +77,15 @@ async function api(path, options = {}) {
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
     const messages = { not_linked: "Նախ կապիր Telegram հաշիվդ։", unauthorized: "Մուտքի ժամկետն ավարտվել է։ Մուտք գործիր կրկին։", already_linked: "Հաշիվն արդեն կապակցված է։" };
-    throw new Error(messages[payload.error] || payload.message || "Համաժամեցումը չհաջողվեց։ Փորձիր կրկին։");
+    const error = new Error(messages[payload.error] || payload.message || "Համաժամեցումը չհաջողվեց։ Փորձիր կրկին։");
+    error.code = payload.error || "";
+    throw error;
   }
   return payload;
 }
 
 function toLocalTask(task) {
-  return { id: task.id, name: task.title, done: task.status === "completed", created: task.created_at, archivedAt: task.archived_at };
+  return { id: task.id, name: task.title, done: task.status === "completed", created: task.created_at, archivedAt: task.archived_at || (task.status === "canceled" ? task.updated_at || task.created_at || new Date().toISOString() : null) };
 }
 
 async function refreshCloudTasks(quiet = false) {
@@ -278,7 +280,10 @@ async function setTaskDone(id, done) {
     try {
       const result = await api(`/tasks/${encodeURIComponent(id)}`, { method: "PATCH", body: { status: done ? "completed" : "open" } });
       Object.assign(task, toLocalTask(result.task)); save(); setMessage("Առաջադրանքի կարգավիճակը համաժամացվեց։", "success");
-    } catch (error) { render(); setMessage(error.message, "error"); }
+    } catch (error) {
+      if (error.code === "not_found") { await refreshCloudTasks(true); setMessage("Ցանկը թարմացվեց․ չեղարկված առաջադրանքները չեն փոխվում։", "error"); }
+      else { render(); setMessage(error.message, "error"); }
+    }
     return;
   }
   task.done = done; save();
@@ -289,7 +294,10 @@ async function archiveTask(id) {
     try {
       await api(`/tasks/${encodeURIComponent(id)}`, { method: "DELETE" });
       state.tasks = state.tasks.filter((task) => task.id !== id); save(); setMessage("Առաջադրանքն արխիվացվեց։", "success");
-    } catch (error) { setMessage(error.message, "error"); }
+    } catch (error) {
+      if (error.code === "not_found") { await refreshCloudTasks(true); setMessage("Ցանկը թարմացվեց․ չեղարկված առաջադրանքները չեն արխիվացվում։", "error"); }
+      else setMessage(error.message, "error");
+    }
     return;
   }
   state.tasks = state.tasks.filter((task) => task.id !== id); save();
@@ -362,4 +370,3 @@ async function initialize() {
 }
 
 initialize();
-
