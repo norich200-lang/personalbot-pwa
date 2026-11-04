@@ -178,11 +178,22 @@ async function createLinkCode() {
   button.disabled = true;
   try {
     const result = await api("/link-codes", { method: "POST", body: {} });
-    $("#link-code").textContent = result.code;
+    $("#link-command").textContent = `/link ${result.code}`;
     $("#link-code-box").hidden = false;
-    setMessage("Կոդը ստեղծվեց։ Telegram-ում ուղարկիր այն բոտին մինչև ժամկետի ավարտը։", "success");
+    setMessage("Կոդը պատրաստ է։ Telegram-ում ուղարկիր ամբողջ /link հրամանը՝ մեկ հաղորդագրությամբ։", "success");
   } catch (error) { setMessage(error.message, "error"); }
   finally { button.disabled = false; }
+}
+
+async function copyLinkCommand() {
+  const command = $("#link-command").textContent.trim();
+  if (!command) { setMessage("Նախ ստեղծիր կապակցման նոր կոդ։", "error"); return; }
+  try {
+    await navigator.clipboard.writeText(command);
+    setMessage("Ամբողջ հրամանը պատճենվեց։ Telegram-ում տեղադրիր և ուղարկիր մեկ հաղորդագրությամբ։", "success");
+  } catch {
+    setMessage("Պատճենումը չհաջողվեց։ Նշիր ամբողջ /link հրամանը և պատճենիր ձեռքով։", "error");
+  }
 }
 
 function generateWebhookSecret() {
@@ -326,6 +337,7 @@ async function initialize() {
   $("#auth-form").addEventListener("submit", signInOrSignUp);
   $("#auth-mode").addEventListener("click", () => { state.authMode = state.authMode === "signin" ? "signup" : "signin"; showAccount(); });
   $("#link-button").addEventListener("click", createLinkCode);
+  $("#copy-link-command").addEventListener("click", copyLinkCommand);
   $("#generate-secret").addEventListener("click", generateWebhookSecret);
   $("#copy-secret").addEventListener("click", copyWebhookSecret);
   $("#setup-webhook").addEventListener("click", setupTelegramWebhook);
