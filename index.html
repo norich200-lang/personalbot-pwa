@@ -1,2 +1,50 @@
 <!doctype html>
-<html lang="hy"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#101827"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="PersonalBot"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg" type="image/svg+xml"><link rel="stylesheet" href="./styles.css"><title>PersonalBot</title></head><body><div class="app-shell"><header class="topbar"><div><div class="eyebrow">ԱՆՁՆԱԿԱՆ ԿԱՌԱՎԱՐՈՒՄ</div><h1>Բարի օր, Գրիշա</h1><p id="today"></p></div><div class="avatar">Գ</div></header><main><section class="summary-grid"><article class="summary-card primary"><span>Այսօրվա առաջադրանքներ</span><strong id="task-count">0</strong><small id="task-sub">0 կատարված</small></article><article class="summary-card"><span>Ակտիվ նպատակներ</span><strong>0</strong><small>Կմիանան տվյալների բազային</small></article></section><section class="quick-add"><label for="task-input">Արագ գրանցում</label><div class="add-row"><input id="task-input" placeholder="Գրի՛ր առաջադրանքը…" autocomplete="off"><button id="add-task" aria-label="Ավելացնել">+</button></div><p class="hint">Գրիր առաջադրանքի անունը և սեղմիր +։</p></section><nav class="tabs" aria-label="Բաժիններ"><button class="tab active" data-view="tasks">Առաջադրանքներ</button><button class="tab" data-view="projects">Նախագծեր</button><button class="tab" data-view="goals">Նպատակներ</button><button class="tab" data-view="habits">Սովորություններ</button><button class="tab" data-view="family">Ընտանիք</button><button class="tab" data-view="reports">Հաշվետվություն</button></nav><section class="content"><div class="section-head"><div><div class="eyebrow" id="section-kicker">ՕՐՎԱ ՊԼԱՆ</div><h2 id="section-title">Առաջադրանքներ</h2></div><span class="counter" id="section-counter">0</span></div><div id="view-content"></div></section></main><footer><span>PersonalBot</span><span>Անձնական աշխատանքային տարածք</span></footer></div><script src="./app.js"></script></body></html>
+<html lang="hy">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101827">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PersonalBot">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./integration.css">
+  <title>PersonalBot</title>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div><div class="eyebrow">ԱՆՁՆԱԿԱՆ ԿԱՌԱՎԱՐՈՒՄ</div><h1>Բարի օր, Գրիշա</h1><p id="today"></p></div>
+      <div class="avatar">Գ</div>
+    </header>
+    <main>
+      <section class="auth-panel" aria-labelledby="auth-title">
+        <div class="auth-heading"><div class="eyebrow">ԱՆՎՏԱՆԳ ԿԱՊ</div><h2 id="auth-title">Մուտք գործել PersonalBot</h2><p id="auth-message">Մուտք գործիր կամ ստեղծիր հաշիվ՝ առաջադրանքները սարքերի միջև համաժամացնելու համար։</p></div>
+        <form id="auth-form">
+          <label for="auth-email">Էլ․ փոստ</label><input id="auth-email" type="email" autocomplete="email" required>
+          <label for="auth-password">Գաղտնաբառ</label><input id="auth-password" type="password" autocomplete="current-password" minlength="8" required>
+          <div class="auth-actions"><button id="auth-submit" type="submit">Մուտք գործել</button><button id="auth-mode" class="secondary-button" type="button">Ստեղծել հաշիվ</button></div>
+        </form>
+        <div id="account-panel" hidden>
+          <p id="account-state"></p>
+          <div class="auth-actions"><button id="link-button" type="button">Կապել Telegram-ը</button><button id="import-local" class="secondary-button" type="button" hidden>Տեղափոխել այս սարքի առաջադրանքները</button><button id="signout" class="secondary-button" type="button">Դուրս գալ</button></div>
+          <div id="link-code-box" class="link-code-box" hidden><p>Telegram-ում բացիր <a href="https://t.me/GrishaLifeManagerBot" target="_blank" rel="noopener">@GrishaLifeManagerBot</a>-ը և ուղարկիր՝</p><code id="link-code"></code><small>Կոդը գործում է 10 րոպե և մեկ անգամ։</small></div>
+        </div>
+        <p id="sync-status" class="sync-status" role="status" aria-live="polite"></p>
+      </section>
+      <section class="summary-grid">
+        <article class="summary-card primary"><span>Այսօրվա առաջադրանքներ</span><strong id="task-count">0</strong><small id="task-sub">0 կատարված</small></article>
+        <article class="summary-card"><span>Ակտիվ նպատակներ</span><strong>0</strong><small>Կմիանան տվյալների բազային</small></article>
+      </section>
+      <section class="quick-add"><label for="task-input">Արագ գրանցում</label><div class="add-row"><input id="task-input" placeholder="Գրի՛ր առաջադրանքը…" autocomplete="off"><button id="add-task" aria-label="Ավելացնել">+</button></div><p class="hint">Գրիր առաջադրանքի անունը և սեղմիր +։</p></section>
+      <nav class="tabs" aria-label="Բաժիններ"><button class="tab active" data-view="tasks">Առաջադրանքներ</button><button class="tab" data-view="projects">Նախագծեր</button><button class="tab" data-view="goals">Նպատակներ</button><button class="tab" data-view="habits">Սովորություններ</button><button class="tab" data-view="family">Ընտանիք</button><button class="tab" data-view="reports">Հաշվետվություն</button></nav>
+      <section class="content"><div class="section-head"><div><div class="eyebrow" id="section-kicker">ՕՐՎԱ ՊԼԱՆ</div><h2 id="section-title">Առաջադրանքներ</h2></div><span class="counter" id="section-counter">0</span></div><div id="view-content"></div></section>
+    </main>
+    <footer><span>PersonalBot</span><span>Անձնական աշխատանքային տարածք</span></footer>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>
+
