@@ -36,7 +36,7 @@ function publishableKey(): string {
 
 function corsHeaders(origin: string | null): Record<string, string> {
   const headers: Record<string, string> = {
-    "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
+    "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info, x-setup-secret",
     "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
     "Vary": "Origin",
   };
@@ -114,6 +114,40 @@ async function pwaRoute(request: Request, origin: string | null, pathname: strin
   const authUserId = await authenticatedUser(request);
   if (!authUserId) return json({ error: "unauthorized" }, 401, origin);
   const method = request.method.toUpperCase();
+
+  if (pathname === "/setup-webhook" && method === "POST") {
+    const expected = Deno.env.get("TELEGRAM_WEBHOOK_SECRET") ?? "";
+    const supplied = request.headers.get("x-setup-secret") ?? "";
+    const botToken = Deno.env.get("BOT_TOKEN") ?? "";
+    if (!/^[A-Za-z0-9_-]{32,128}$/.test(expected) || !safeEqual(expected, supplied)) return json({ error: "invalid_setup_secret" }, 401, origin);
+    if (!botToken) return json({ error: "bot_token_not_configured" }, 503, origin);
+    const webhookUrl = `${PROJECT_URL}/functions/v1/personalbot-api/telegram-webhook`;
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        url: webhookUrl,
+        secret_token: expected,
+        allowed_updates: ["message"],
+        drop_pending_updates: false,
+      }),
+    });
+    const result = await response.json().catch(() => ({})) as { ok?: boolean };
+    if (!response.ok || result.ok !== true) return json({ error: "telegram_webhook_setup_failed" }, 502, origin);
+    await fetch(`https://api.telegram.org/bot${botToken}/setMyCommands`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ commands: [
+        { command: "tasks", description: "Ցույց տալ բաց առաջադրանքները" },
+        { command: "add", description: "Ավելացնել առաջադրանք" },
+        { command: "done", description: "Ավարտել առաջադրանք ըստ համարի" },
+        { command: "delete", description: "Արխիվացնել առաջադրանք ըստ համարի" },
+        { command: "link", description: "Կապել PersonalBot PWA-ն" },
+        { command: "help", description: "Ցույց տալ հրամանները" },
+      ] }),
+    }).catch(() => undefined);
+    return json({ ok: true }, 200, origin);
+  }
 
   if (pathname === "/me" && method === "GET") {
     const result = await rpc({ p_action: "linked", p_auth_user_id: authUserId });
@@ -299,4 +333,3 @@ Deno.serve(async (request: Request) => {
     return json({ error: status === 500 ? "internal_error" : message }, status, origin);
   }
 });
-

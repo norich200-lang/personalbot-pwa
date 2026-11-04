@@ -29,6 +29,12 @@
         </form>
         <div id="account-panel" hidden>
           <p id="account-state"></p>
+          <div class="webhook-setup">
+            <label for="webhook-secret">Telegram-ի webhook գաղտնի կոդ</label>
+            <div class="add-row"><input id="webhook-secret" type="password" autocomplete="off" placeholder="Պահիր այստեղ միայն ժամանակավորապես"><button id="generate-secret" type="button" aria-label="Ստեղծել գաղտնի կոդ">↻</button></div>
+            <div class="auth-actions"><button id="copy-secret" class="secondary-button" type="button">Պատճենել կոդը</button><button id="setup-webhook" type="button">Միացնել Telegram բոտը</button></div>
+            <small>Նախ նույն կոդը պահիր Supabase-ի Edge Function Secrets-ում որպես TELEGRAM_WEBHOOK_SECRET։ Այս դաշտը չի պահպանվում։</small>
+          </div>
           <div class="auth-actions"><button id="link-button" type="button">Կապել Telegram-ը</button><button id="import-local" class="secondary-button" type="button" hidden>Տեղափոխել այս սարքի առաջադրանքները</button><button id="signout" class="secondary-button" type="button">Դուրս գալ</button></div>
           <div id="link-code-box" class="link-code-box" hidden><p>Telegram-ում բացիր <a href="https://t.me/GrishaLifeManagerBot" target="_blank" rel="noopener">@GrishaLifeManagerBot</a>-ը և ուղարկիր՝</p><code id="link-code"></code><small>Կոդը գործում է 10 րոպե և մեկ անգամ։</small></div>
         </div>
@@ -47,4 +53,3 @@
   <script src="./app.js"></script>
 </body>
 </html>
-

@@ -71,7 +71,7 @@ async function api(path, options = {}) {
   const token = await accessToken();
   const response = await fetch(`${API_URL}${path}`, {
     method: options.method || "GET",
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${token}`, ...(options.body === undefined ? {} : { "Content-Type": "application/json" }) },
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${token}`, ...(options.body === undefined ? {} : { "Content-Type": "application/json" }), ...(options.headers || {}) },
     ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
   });
   const payload = await response.json().catch(() => ({}));
@@ -157,7 +157,8 @@ async function signInOrSignUp(event) {
   submit.disabled = true;
   try {
     if (state.authMode === "signup") {
-      const result = await authFetch("signup", { email, password });
+      const redirectTo = `${location.origin}${location.pathname}`;
+      const result = await authFetch(`signup?redirect_to=${encodeURIComponent(redirectTo)}`, { email, password });
       if (!result.access_token) { authMessage("Հաստատման հղումն ուղարկվեց էլ․ փոստին։ Հաստատելուց հետո բացիր այս էջը կրկին։"); return; }
       storeSession(result);
       authMessage("Հաշիվը ստեղծվեց։");
@@ -180,6 +181,35 @@ async function createLinkCode() {
     $("#link-code").textContent = result.code;
     $("#link-code-box").hidden = false;
     setMessage("Կոդը ստեղծվեց։ Telegram-ում ուղարկիր այն բոտին մինչև ժամկետի ավարտը։", "success");
+  } catch (error) { setMessage(error.message, "error"); }
+  finally { button.disabled = false; }
+}
+
+function generateWebhookSecret() {
+  const bytes = crypto.getRandomValues(new Uint8Array(24));
+  $("#webhook-secret").value = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  setMessage("Ստեղծվեց 48-նիշ կոդ։ Պատճենիր այն Supabase Edge Function Secrets-ում։");
+}
+
+async function copyWebhookSecret() {
+  const value = $("#webhook-secret").value;
+  if (!value) { setMessage("Նախ ստեղծիր գաղտնի կոդը։", "error"); return; }
+  try { await navigator.clipboard.writeText(value); setMessage("Կոդը պատճենվեց։ Պահիր այն Supabase Edge Function Secrets-ում։", "success"); }
+  catch { setMessage("Պատճենումը չհաջողվեց։ Ընտրիր և պատճենիր կոդը ձեռքով։", "error"); }
+}
+
+async function setupTelegramWebhook() {
+  const secret = $("#webhook-secret").value.trim();
+  if (!/^[A-Za-z0-9_-]{32,128}$/.test(secret)) {
+    setMessage("Մուտքագրիր Supabase Edge Function Secrets-ում պահված 32–128 նիշանոց webhook կոդը։", "error");
+    return;
+  }
+  const button = $("#setup-webhook");
+  button.disabled = true;
+  try {
+    await api("/setup-webhook", { method: "POST", body: {}, headers: { "x-setup-secret": secret } });
+    $("#webhook-secret").value = "";
+    setMessage("Telegram բոտը միացված է։ Կարող ես կապել PWA հաշիվը։", "success");
   } catch (error) { setMessage(error.message, "error"); }
   finally { button.disabled = false; }
 }
@@ -208,6 +238,7 @@ async function signOut() {
   localStorage.removeItem("pb_session");
   state.session = null; state.user = null; state.linked = false;
   $("#auth-form").hidden = false; $("#account-panel").hidden = true; $("#link-code-box").hidden = true;
+  $("#webhook-secret").value = "";
   setMessage("Դուրս եկար։ Այս սարքի պահված տվյալները չեն ջնջվել։");
 }
 
@@ -295,6 +326,9 @@ async function initialize() {
   $("#auth-form").addEventListener("submit", signInOrSignUp);
   $("#auth-mode").addEventListener("click", () => { state.authMode = state.authMode === "signin" ? "signup" : "signin"; showAccount(); });
   $("#link-button").addEventListener("click", createLinkCode);
+  $("#generate-secret").addEventListener("click", generateWebhookSecret);
+  $("#copy-secret").addEventListener("click", copyWebhookSecret);
+  $("#setup-webhook").addEventListener("click", setupTelegramWebhook);
   $("#import-local").addEventListener("click", importLocalTasks);
   $("#signout").addEventListener("click", signOut);
   try { await loadHashSession(); } catch { authMessage("Էլ․ փոստի հաստատումը չհաջողվեց։ Մուտք գործիր կրկին։"); }
@@ -313,4 +347,3 @@ async function initialize() {
 }
 
 initialize();
-
