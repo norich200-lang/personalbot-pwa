@@ -88,7 +88,6 @@ async function rpc(args: Json): Promise<Json> {
     method: "POST",
     headers: {
       apikey: secret,
-      authorization: `Bearer ${secret}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(args),
